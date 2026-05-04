@@ -78,10 +78,13 @@ Training uses a 10K math reasoning dataset (`dataset/train_data_10k.parquet`) wi
 ## Citation
 
 ```bibtex
-@article{ucpo2026,
-  title={Uniform Correct Policy Optimization},
-  author={Anamika Lochab, Bolian Li, Ruqi Zhang},
-  journal={arXiv preprint arXiv:2605.00365},
-  year={2026}
+@article{lochab2026uniformcorrectpolicyoptimizationbreaking,
+      title={Uniform-Correct Policy Optimization: Breaking RLVR's Indifference to Diversity}, 
+      author={Anamika Lochab and Bolian Li and Ruqi Zhang},
+      year={2026},
+      eprint={2605.00365},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2605.00365}, 
 }
 ```

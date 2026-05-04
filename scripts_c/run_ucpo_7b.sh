@@ -1,18 +1,12 @@
 #!/bin/bash
 set -x
 
-# ============================================================
-# Run 2: DivGRPO — tau only, no alpha (correct-set diversity only)
-# No length normalization (raw seq_logp → needs small tau)
-# Purpose: Isolate the diversity bonus on correct responses
-# ============================================================
-
 NUM_EPISODES=3
 n_samples_per_prompt=8
 n_rollout_max=8
 n_rollout_min=8
 
-LR_ACTOR=5e-6
+LR_ACTOR=2e-6
 entropy_coeff=0
 
 n_rollout_update=0
@@ -21,15 +15,17 @@ enable_annealing=False
 
 TRAIN_DATADIR=./dataset/train_data_10k.parquet
 VAL_DATADIR=./dataset/valid_data.parquet
-MODELDIR=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B
+MODELDIR=deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
 
 PRETRAIN_DIR=$MODELDIR
 EXP_NAME=run_ucpo_0.2
-SAVE_DIR=../checkpoint_re/ds_1.5b_${EXP_NAME}/
+SAVE_DIR=../checkpoint_ds/ds_7b_${EXP_NAME}/
 TENSORBOARD_PATH=$SAVE_DIR/tensorboard
 
 export TENSORBOARD_DIR=$TENSORBOARD_PATH
 export HYDRA_FULL_ERROR=1
+export CUDA_DEVICE_MAX_CONNECTIONS=1
+export VLLM_ALLREDUCE_USE_SYMM_MEM=0
 
 python3 -m ucpo.main_run \
     algorithm.adv_estimator=iq \
@@ -51,12 +47,13 @@ python3 -m ucpo.main_run \
     actor_rollout_ref.actor.kl_loss_coef=0 \
     actor_rollout_ref.actor.kl_loss_type=low_var_kl \
     actor_rollout_ref.actor.entropy_coeff=$entropy_coeff \
+    actor_rollout_ref.actor.ulysses_sequence_parallel_size=2 \
     actor_rollout_ref.model.enable_gradient_checkpointing=True \
     actor_rollout_ref.actor.fsdp_config.param_offload=False \
     actor_rollout_ref.actor.fsdp_config.optimizer_offload=False \
-    actor_rollout_ref.rollout.tensor_model_parallel_size=1 \
+    actor_rollout_ref.rollout.tensor_model_parallel_size=2 \
     actor_rollout_ref.rollout.name=vllm \
-    actor_rollout_ref.rollout.gpu_memory_utilization=0.8 \
+    actor_rollout_ref.rollout.gpu_memory_utilization=0.5 \
     actor_rollout_ref.rollout.n=$n_samples_per_prompt \
     actor_rollout_ref.rollout.n_low=$n_rollout_min \
     actor_rollout_ref.rollout.n_high=$n_rollout_max \
@@ -71,7 +68,7 @@ python3 -m ucpo.main_run \
     trainer.logger=['console','tensorboard'] \
     trainer.project_name='GRPO' \
     trainer.experiment_name=$EXP_NAME \
-    trainer.n_gpus_per_node=4 \
+    trainer.n_gpus_per_node=8 \
     trainer.nnodes=1 \
     trainer.default_local_dir=$SAVE_DIR \
     trainer.save_freq=50 \
